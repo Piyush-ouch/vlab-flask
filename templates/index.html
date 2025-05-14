@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendulum Experiment</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Navigation Bar Styles */
+        .navbar {
+            background: linear-gradient(135deg, #11999E 0%, #30E3CA 100%);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .nav-btn:active {
+            transform: translateY(0);
+        }
+        
+        .pendulum-box {
+            width: 700px;
+            height: 500px;
+            margin: 20px auto;
+            border: 3px solid #333;
+            border-radius: 10px;
+            position: relative;
+            background-color: #f9f9f9;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .pendulum-container {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 100%;
+        }
+        
+        .pendulum-support {
+            width: 120px;
+            height: 20px;
+            background-color: #333;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .pendulum-hanger {
+            width: 10px;
+            height: 20px;
+            background-color: #555;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-btn">Pendulum Experiment</a>
+            <a href="/phytheory" class="nav-btn">Theory</a>
+            <a href="/quiz" class="nav-btn">Prerequisite</a>
+        </div>
+    </nav>
+    
+    <div class="particles"></div>
+    <div class="container">
+        <h1>Simple Pendulum Experiment</h1>
+        
+        <div class="control-panel">
+            <div class="input-group">
+                <label for="oscillations">Oscillations (n):</label>
+                <input type="number" id="oscillations" min="1" value="5">
+            </div>
+            <div class="input-group">
+                <label for="length">Length (cm):</label>
+                <input type="number" id="length" min="10" value="50">
+            </div>
+            <button id="start-btn">Start</button>
+            <button id="reset-btn">Reset</button>
+        </div>
+        
+        <div class="pendulum-box">
+            <div class="pendulum-container">
+                <div class="stopwatch-container">
+                    <div class="stopwatch-box">
+                        <div class="stopwatch-display">00:00.00</div>
+                        <div class="stopwatch-controls">
+                            <button id="stopwatch-start" class="stopwatch-btn start-btn">Start</button>
+                            <button id="stopwatch-stop" class="stopwatch-btn stop-btn">Stop</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pendulum-support"></div>
+                <div class="pendulum-hanger"></div>
+                <div class="pendulum-string-container">
+                    <div class="pendulum-string"></div>
+                    <div class="pendulum-bob" id="bob"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="phase-difference-section">
+            <h2>Phase Difference Calculation</h2>
+            <div class="formula-container">
+                <div class="formula">
+                    φ = (2π/𝑇) × Δ𝑡
+                </div>
+                <div class="calculation">
+                    Current Phase Difference: 
+                    <span id="phase-difference-value">0</span> radians
+                    (Δ𝑡 = <span id="time-difference">0</span>s)
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-section">
+            <h2>Experiment Data</h2>
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Trial</th>
+                        <th>Oscillations</th>
+                        <th>Total Time (s)</th>
+                        <th>T(s)</th>
+                    </tr>
+                </thead>
+                <tbody id="data-body"></tbody>
+            </table>
+            <button id="average-btn">Calculate Average</button>
+            <div id="average-result"></div>
+        </div>
+    </div>
+    <div class="divider-line"></div>
+    <div class="graph-section">
+        <canvas id="phaseGraph" width="600" height="300"></canvas>
+        <div class="graph-text">
+            <h3>Phase Difference Analysis</h3>
+            <p>The phase difference (φ) between two oscillating systems is calculated using:</p>
+            <p class="formula">φ = (2π/𝑇) × Δ𝑡</p>
+            <p>Where:</p>
+            <ul>
+                <li>𝑇 is the period of oscillation</li>
+                <li>Δ𝑡 is the time difference between corresponding points</li>
+            </ul>
+            <p>This experiment demonstrates how the phase relationship changes over time between two pendulums with different lengths.</p>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

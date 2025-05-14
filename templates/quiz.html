@@ -1,0 +1,226 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pendulum Quiz</title>
+  <style>
+    body {
+      background-color: #fff0f5;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .quiz-container {
+      max-width: 700px;
+      margin: auto;
+      background-color: #ffffff;
+      border: 2px solid #ff69b4;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 0 20px rgba(255, 105, 180, 0.3);
+    }
+
+    h2 {
+      text-align: center;
+      color: #ff69b4;
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    .question {
+      background: #ffe6f0;
+      border: 1px solid #ffb6c1;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-radius: 15px;
+      box-shadow: 2px 2px 10px rgba(255, 105, 180, 0.1);
+    }
+
+    .question p {
+      margin: 0 0 10px;
+      font-weight: bold;
+      color: #c71585;
+      font-size: 17px;
+    }
+
+    input[type="radio"] {
+      margin-right: 8px;
+    }
+
+    label {
+      display: block;
+      margin: 4px 0;
+      padding: 5px 10px;
+      border-radius: 10px;
+    }
+
+    .correct {
+      background-color: #d4f8d4;
+      border: 1px solid #5cb85c;
+    }
+
+    .wrong {
+      background-color: #f8d4d4;
+      border: 1px solid #d9534f;
+    }
+
+    button {
+      background-color: #ff69b4;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+      display: block;
+      margin: 20px auto 10px;
+    }
+
+    button:hover {
+      background-color: #e0559e;
+    }
+
+    .result {
+      text-align: center;
+      font-weight: bold;
+      color: #c71585;
+      font-size: 20px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h2>💡 Prerequisite Quiz</h2>
+    <form id="quizForm">
+      <div class="question">
+        <p>🔁 1. What is the time period of a pendulum?</p>
+        <label><input type="radio" name="q1" value="a">Distance it travels</label>
+        <label><input type="radio" name="q1" value="c">Time for one complete swing</label>
+        <label><input type="radio" name="q1" value="b">Mass of the bob</label>
+      </div>
+
+      <div class="question">
+        <p>📏 2. What affects the period of a pendulum the most?</p>
+        <label><input type="radio" name="q2" value="c">Bob color</label>
+        <label><input type="radio" name="q2" value="a">Length of the string</label>
+        <label><input type="radio" name="q2" value="b">Shape of the bob</label>
+      </div>
+
+      <div class="question">
+        <p>📐 3. What is amplitude in a pendulum?</p>
+        <label><input type="radio" name="q3" value="c">Angle between rod and vertical</label>
+        <label><input type="radio" name="q3" value="b">Maximum displacement from mean position</label>
+        <label><input type="radio" name="q3" value="a">Speed of swing</label>
+      </div>
+
+      <div class="question">
+        <p>📍 4. What is the mean position of a pendulum?</p>
+        <label><input type="radio" name="q4" value="b">Lowest energy point</label>
+        <label><input type="radio" name="q4" value="a">Maximum height</label>
+        <label><input type="radio" name="q4" value="c">Its resting position</label>
+      </div>
+
+      <div class="question">
+        <p>🎯 5. What is frequency?</p>
+        <label><input type="radio" name="q5" value="c">Height reached by bob</label>
+        <label><input type="radio" name="q5" value="b">Length of the pendulum</label>
+        <label><input type="radio" name="q5" value="a">Number of oscillations per second</label>
+      </div>
+
+      <div class="question">
+        <p>🔄 6. What is one complete oscillation?</p>
+        <label><input type="radio" name="q6" value="b">One full to and fro motion</label>
+        <label><input type="radio" name="q6" value="c">Random swing</label>
+        <label><input type="radio" name="q6" value="a">Only forward motion</label>
+      </div>
+
+      <div class="question">
+        <p>⏱️ 7. What is the SI unit of time period?</p>
+        <label><input type="radio" name="q7" value="b">Meters</label>
+        <label><input type="radio" name="q7" value="c">Seconds</label>
+        <label><input type="radio" name="q7" value="a">Hertz</label>
+      </div>
+
+      <div class="question">
+        <p>📶 8. What increases when pendulum string is longer?</p>
+        <label><input type="radio" name="q8" value="c">Mass</label>
+        <label><input type="radio" name="q8" value="b">Frequency</label>
+        <label><input type="radio" name="q8" value="a">Time period</label>
+      </div>
+
+      <div class="question">
+        <p>🌍 9. What is the restoring force in a pendulum?</p>
+        <label><input type="radio" name="q9" value="b">Magnetism</label>
+        <label><input type="radio" name="q9" value="a">Air resistance</label>
+        <label><input type="radio" name="q9" value="c">Gravity</label>
+      </div>
+
+      <div class="question">
+        <p>📊 10. What is phase in pendulum motion?</p>
+        <label><input type="radio" name="q10" value="b">Angular position at a given time</label>
+        <label><input type="radio" name="q10" value="c">Time period</label>
+        <label><input type="radio" name="q10" value="a">Frequency</label>
+      </div>
+
+      <button type="button" onclick="checkAnswers()">Submit Quiz</button>
+      <div class="result" id="result"></div>
+      <button id="retryBtn" onclick="resetQuiz()" style="display:none;">🔁 Retry Quiz</button>
+    </form>
+  </div>
+
+  <script>
+    const correctAnswers = {
+      q1: "c",
+      q2: "a",
+      q3: "b",
+      q4: "c",
+      q5: "a",
+      q6: "b",
+      q7: "c",
+      q8: "a",
+      q9: "c",
+      q10: "b"
+    };
+
+    function checkAnswers() {
+      let score = 0;
+      for (let q in correctAnswers) {
+        const selected = document.querySelector(`input[name="${q}"]:checked`);
+        const options = document.querySelectorAll(`input[name="${q}"]`);
+        options.forEach(opt => {
+          const label = opt.parentElement;
+          label.classList.remove("correct", "wrong");
+          if (opt.value === correctAnswers[q]) {
+            label.classList.add("correct");
+          }
+          if (selected && opt.checked && opt.value !== correctAnswers[q]) {
+            label.classList.add("wrong");
+          }
+        });
+        if (selected && selected.value === correctAnswers[q]) {
+          score++;
+        }
+      }
+
+      document.getElementById("result").innerText = `🎉 You scored ${score} out of 10!`;
+      document.getElementById("retryBtn").style.display = "block";
+    }
+
+    function resetQuiz() {
+      const inputs = document.querySelectorAll("input[type='radio']");
+      inputs.forEach(input => input.checked = false);
+
+      const labels = document.querySelectorAll("label");
+      labels.forEach(label => label.classList.remove("correct", "wrong"));
+
+      document.getElementById("result").innerText = "";
+      document.getElementById("retryBtn").style.display = "none";
+    }
+  </script>
+</body>
+</html>
+

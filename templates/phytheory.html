@@ -1,0 +1,349 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theory - Phase Difference in Pendulum</title>
+  <style>
+    body {
+      background-color: #fff0f5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #222;
+      padding: 2rem;
+      line-height: 1.7;
+    }
+    h1, h2 {
+      color: #cc2277;
+    }
+    .section {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: #ffeef5;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(204, 34, 119, 0.2);
+    }
+    .highlight {
+      background-color: #fff;
+      border-left: 4px solid #cc2277;
+      padding: 0.5rem 1rem;
+      font-family: 'Courier New', Courier, monospace;
+      margin: 1rem 0;
+      color: #444;
+    }
+    .image-center {
+      display: block;
+      margin: 1rem auto;
+      max-width: 90%;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    ul {
+      padding-left: 1.5rem;
+    }
+    .fun-box {
+      background: #ffe1ec;
+      border-left: 4px solid #cc2277;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 10px;
+      font-style: italic;
+    }
+    .calculator {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 1rem;
+    }
+    input, button {
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #cc2277;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+.nav-bar {
+  background: linear-gradient(to right, #ffaad4, #ffcee2);
+  padding: 1rem;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 4px 12px rgba(204, 34, 119, 0.2);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.nav-bar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  gap: 1rem;
+}
+
+.nav-bar a {
+  text-decoration: none;
+  color: #cc2277;
+  background-color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 30px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.nav-bar a:hover {
+  background-color: #cc2277;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(204, 34, 119, 0.3);
+}
+  </style>
+</head>
+<body>
+<nav class="nav-bar">
+  <ul>
+      <a href="/" class="nav-btn">Pendulum Experiment</a>
+      <a href="/phytheory" class="nav-btn">Theory</a>
+      <a href="/quiz" class="nav-btn">Prerequisite</a>
+  </ul>
+</nav>
+  <h1>Phase Difference as a Function of Time Difference</h1>
+
+  <div class="section">
+    <h2>📌 Introduction</h2>
+    <p>Imagine a hanging bell gently swinging back and forth — that’s our <strong>Simple Pendulum</strong>. In this virtual lab, we will understand the <strong>phase difference</strong> between two points during its swing. Sounds easy? Let’s dive in!</p>
+  </div>
+
+  <div class="section">
+  <h2>📎 Key Definitions</h2>
+  <ul>
+    <li><strong>🎯 Simple Pendulum:</strong> A simple pendulum is a mass (bob) suspended by a light, inextensible string that swings back and forth under the force of gravity.</li>
+    <li><strong>⏱️ Time Period:</strong> Time taken for one complete swing (forward and back).</li>
+    <li><strong>📐 Phase:</strong> Phase refers to the position of a point within a wave cycle of a light wave, usually measured in degrees or radians.</li>
+    <li><strong>🔄 Oscillation:</strong> Oscillation is the repetitive back-and-forth movement around the equilibrium position.</li>
+    <li><strong>📊 Amplitude:</strong> The maximum distance the pendulum moves from its central (rest) position.</li>
+    <li><strong>⚖️ Equlibrium Position:</strong>Central position where the object naturally settles when no external forces are applied.</li>
+    <li><strong>🎵 Frequency:</strong> The number of oscillations completed in one second. Formula: f = 1 / T</li>
+    <li><strong>↔ Displacement:</strong> The distance of the pendulum bob from the equlibrium position at any point in time.</li>
+  </ul>
+</div>
+
+  <div class="section">
+    <h2>📍 Phase Difference Between Two Points</h2>
+    <p>The phase difference between two points in a wave refers to the difference in the phase of the wave at those two points, typically measured in radians or degrees.</p>
+    <div class="highlight">
+      Δφ = (2π / T) × Δt
+    </div>
+    <p>Where:<br>
+      Δφ = Phase difference (in radians and degree )<br>
+      T = Time period of the pendulum<br>
+      Δt = Time difference between the two positions</p>
+    <div class="fun-box">Imagine your friend said “hi” at one end of the pendulum and another replied “hello” a bit later at the other end — the time between them is your Δt!</div>
+  </div>
+
+  <div class="section">
+    <h2>📊 Try the Phase Calculator</h2>
+    <div class="calculator">
+      <label for="T">Time Period (T in sec):</label><br>
+      <input type="number" id="T" placeholder="e.g. 2"><br>
+      <label for="dt">Time Difference (Δt in sec):</label><br>
+      <input type="number" id="dt" placeholder="e.g. 0.25"><br>
+      <button onclick="calculatePhase()">Calculate Phase Difference</button>
+      <p id="result"></p>
+    </div>
+    <script>
+      function calculatePhase() {
+        const T = parseFloat(document.getElementById('T').value);
+        const dt = parseFloat(document.getElementById('dt').value);
+        if (!T || !dt) {
+          document.getElementById('result').innerText = "Please enter valid values.";
+          return;
+        }
+        const phi = ((2 * Math.PI) / T) * dt;
+        document.getElementById('result').innerText = `Phase Difference (Δφ): ${phi.toFixed(3)} radians`;
+      }
+    </script>
+  </div>
+
+  <div class="section">
+  <h2>🧠 Mathematical Expression</h2>
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; flex-wrap: wrap;">
+    
+    <!-- Left Side: Text Content -->
+    <div style="flex: 1; min-width: 250px;">
+      <p>General equation for Simple Harmonic Motion (SHM) of pendulum:</p>
+      <div class="highlight">
+        x(t) = A cos(ωt + φ)
+      </div>
+      <p>Where:<br>
+        x(t) = Position at time t<br>
+        A = Amplitude (maximum swing)<br>
+        ω = Angular frequency (ω = 2π / T)<br>
+        φ = Phase constant (starting position of pendulum)</p>
+    </div>
+
+    <!-- Right Side: Pendulum Animation -->
+    <div class="pendulum-box" style="flex-shrink: 0;">
+      <div class="pendulum-title">Simple Pendulum</div>
+      <div class="pendulum-wrapper">
+        <div class="pivot"></div>
+        <div class="rod">
+          <div class="bob"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Pendulum CSS -->
+<style>
+  .pendulum-box {
+    background: white;
+    border: 2px solid #ff69b4;
+    border-radius: 20px;
+    padding: 30px;
+    width: 300px;
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.3);
+    text-align: center;
+  }
+
+  .pendulum-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff69b4;
+    margin-bottom: 20px;
+  }
+
+  .pendulum-wrapper {
+    position: relative;
+    width: 100px;
+    height: 200px;
+    margin: 0 auto;
+  }
+
+  .rod {
+    width: 2px;
+    height: 150px;
+    background-color: #333;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    transform-origin: top center;
+    animation: swing 2s infinite ease-in-out;
+  }
+
+  .bob {
+    width: 30px;
+    height: 30px;
+    background-color: #ff69b4;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .pivot {
+    width: 10px;
+    height: 10px;
+    background-color: #333;
+    border-radius: 50%;
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+
+  @keyframes swing {
+    0% { transform: rotate(-25deg); }
+    50% { transform: rotate(25deg); }
+    100% { transform: rotate(-25deg); }
+  }
+</style>
+  <div class="section">
+  <h2>🆚 Simple vs Compound Pendulum</h2>
+  <div style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: space-between; align-items: stretch;">
+    
+    <!-- Simple Pendulum -->
+    <div style="flex: 1; min-width: 280px;">
+      <h3 style="color: #cc2277;">🎯 Simple Pendulum</h3>
+      <p>A small mass (bob) suspended by a light, inextensible string swinging under gravity. Assumes all mass is concentrated at a single point.</p>
+      <div class="highlight">
+        T = 2π √(L / g)<br><br>
+	T is the period of the pendulum in seconds (s).
+	<br>
+        L is the length of the pendulum in (m).
+	<br>
+        g is the acceleration due to gravity in  (m/s²)
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="width: 2px; background-color: #cc2277; opacity: 0.3;"></div>
+
+    <!-- Compound Pendulum -->
+    <div style="flex: 1; min-width: 280px;">
+      <h3 style="color: #cc2277;">🏗️ Compound Pendulum</h3>
+
+      <p>A compound pendulum is a rigid body suspended from a fixed horizontal axis and its time period depends on its moment of inertia and the distance from the pivot to the center of mass.</p>
+      <div class="highlight">
+        T = 2π √(I / mgh)
+        <br><br>
+        I = Moment of inertia in kg·m²<br>
+        m = Mass in kg<br>
+        g = Gravity in m/s²<br>
+        h = Distance to center of mass in meters(m)
+      </div>
+    </div>
+
+  </div>
+  <div class="fun-box">Think of the simple pendulum as a playground swing and the compound one as a heavy swinging door. Both move rhythmically, but the physics behind them differs!</div>
+</div>
+
+
+
+  <div class="section">
+    <h2>🎯 Conditions of the Experiment</h2>
+    <ul>
+      <li>The angle should be small (≤15°) — otherwise, it won’t follow SHM properly.</li>
+      <li>The string should be thin and tight — not stretchy like a rubber band.</li>
+      <li>The bob (mass) should be small and solid.</li>
+      <li>The pivot point should be frictionless — or else, the pendulum will stop too soon.</li>
+    </ul>
+  </div>
+
+ 
+<div class="section">
+  <h2>🧩 Explore & Remember!</h2>
+
+  <p>Now that you've seen how a pendulum swings and how phase difference works, here’s a quick brain-teaser to lock it in:</p>
+
+  <div class="highlight">
+    🧠 If two pendulums have the same time period but start swinging at different times,<br>
+    which one is leading in phase? Can you calculate how much? 🤔
+  </div>
+
+  <p>Try adjusting values in the calculator above to explore it yourself!</p>
+
+  <div class="fun-box">
+    🎉 <strong>Did You Know?</strong><br>
+    Galileo discovered pendulum motion by watching a swinging lamp in a church — and used it to invent one of the first timekeepers!
+  </div>
+
+  <p style="margin-top: 1rem;">Keep swinging between questions and curiosity — that’s how learning works! 🔁✨</p>
+</div>
+
+
+
+
+ </body>
+</html>
