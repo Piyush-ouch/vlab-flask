@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const averageResult = document.getElementById('average-result');
     const phaseDisplay = document.getElementById('phase-difference-value');
     const timeDisplay = document.getElementById('time-difference');
-    const phaseGraphCanvas = document.getElementById('phaseGraph');
 
     // Stopwatch Elements
     const stopwatchDisplay = document.querySelector('.stopwatch-display');
@@ -25,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const millisecondsDisplay = document.createElement('span');
     millisecondsDisplay.id = 'milliseconds';
     millisecondsDisplay.textContent = '00';
-
+    
     // Build the display structure
     stopwatchDisplay.innerHTML = '';
     stopwatchDisplay.appendChild(minutesDisplay);
@@ -76,7 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateLength();
     initializePhaseGraph();
     setupEventListeners();
-    updateButtonStates(); // Initialize button states
 
     function setupEventListeners() {
         bob.addEventListener('mousedown', startDrag);
@@ -102,11 +100,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateStopwatch() {
         const currentTime = Date.now();
         elapsedTime = currentTime - stopwatchStartTime;
-
+        
         const minutes = Math.floor(elapsedTime / 60000);
         const seconds = Math.floor((elapsedTime % 60000) / 1000);
         const milliseconds = Math.floor((elapsedTime % 1000) / 10);
-
+        
         minutesDisplay.textContent = minutes.toString().padStart(2, '0');
         secondsDisplay.textContent = seconds.toString().padStart(2, '0');
         millisecondsDisplay.textContent = milliseconds.toString().padStart(2, '0');
@@ -128,11 +126,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateButtonStates() {
-        stopwatchStartBtn.disabled = isStopwatchRunning || isPendulumRunning;
-        stopwatchStopBtn.disabled = !isStopwatchRunning || !isPendulumRunning;
-        startBtn.disabled = isPendulumRunning || isStopwatchRunning;
-        resetBtn.disabled = !isPendulumRunning && !isStopwatchRunning && trialData.length === 0;
-        averageBtn.disabled = trialData.length === 0;
+        stopwatchStartBtn.disabled = isStopwatchRunning;
+        stopwatchStopBtn.disabled = !isStopwatchRunning;
+        startBtn.disabled = isPendulumRunning;
+        resetBtn.disabled = !isPendulumRunning && !isStopwatchRunning;
     }
 
     function startStopwatchAndPendulum() {
@@ -144,10 +141,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 lastZeroCrossingTime = 0;
                 periodMeasurements = [];
                 phaseMeasurements = [];
-
+                
                 // Reset the stopwatch to 00:00:00 before starting
-                resetStopwatch();
-
+                resetStopwatch(); // <-- FIX: Reset stopwatch before new observation
+                
                 // Set initial angle to 60 degrees when starting fresh
                 startAngle = 60;
                 stringContainer.style.transform = `translateX(-50%) rotate(${startAngle}deg)`;
@@ -156,19 +153,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Calculate paused duration and add to pauseTime
                 pauseTime += Date.now() - lastResumeTime;
             }
-
+            
             // Start or resume stopwatch
             startStopwatch();
             isPendulumRunning = true;
             isFreshStart = false;
             updateButtonStates();
-
+            
             const oscillations = parseInt(oscillationsInput.value) || 5;
             const lengthCm = parseInt(lengthInput.value) || 50;
-
+            
             if (animationId) cancelAnimationFrame(animationId);
             animationId = requestAnimationFrame((t) => animatePendulum(t, oscillations, lengthCm));
-
+            
             lastResumeTime = Date.now();
         }
     }
@@ -261,39 +258,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function animatePendulum(timestamp, oscillations, lengthCm) {
         if (!startTime) startTime = timestamp;
-
+        
         const adjustedTimestamp = timestamp - pauseTime;
         const elapsed = (adjustedTimestamp - startTime) / 1000;
-
+    
         const lengthM = lengthCm / 100;
         currentPeriod = 2 * Math.PI * Math.sqrt(lengthM / GRAVITY);
         const angle = startAngle * Math.cos(2 * Math.PI * elapsed / currentPeriod);
-
+    
         phaseDifference = (2 * Math.PI * (elapsed % currentPeriod)) / currentPeriod;
         phaseDisplay.textContent = phaseDifference.toFixed(3);
-
+    
         stringContainer.style.transform = `translateX(-50%) rotate(${angle}deg)`;
-
-        // More robust zero-crossing detection
-        const currentSign = Math.sign(angle);
-        const lastSign = Math.sign(lastAngle);
-
-        // Increment oscillation count only when the sign of the angle changes
-        if (currentSign !== 0 && lastSign !== 0 && currentSign !== lastSign) {
-            oscillationCount += 0.5;
-
-            if (oscillationCount % 1 === 0) {
-                const period = elapsed - lastZeroCrossingTime;
-                lastZeroCrossingTime = elapsed;
-                periodMeasurements.push(period);
-                phaseMeasurements.push(phaseDifference);
-            }
-        }
-
+    
         // Check if we've reached the required number of oscillations
         if (oscillationCount >= oscillations) {
-            // Wait until pendulum is very close to the vertical position
-            if (Math.abs(angle) < 1) { // Increased precision for stopping
+            // Wait until pendulum returns to vertical position (angle ≈ 0)
+            if (Math.abs(angle) < 2) {
                 stopStopwatch();
                 addDataToTable(oscillations, elapsed);
                 isPendulumRunning = false;
@@ -302,13 +283,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
         }
-
+        else if (Math.abs(angle) < 5 && Math.sign(angle) !== Math.sign(lastAngle)) {
+            oscillationCount += 0.5;
+    
+            if (oscillationCount % 1 === 0) {
+                const period = elapsed - lastZeroCrossingTime;
+                lastZeroCrossingTime = elapsed;
+    
+                periodMeasurements.push(period);
+                phaseMeasurements.push(phaseDifference);
+            }
+        }
+    
         lastAngle = angle;
         animationId = requestAnimationFrame((t) => animatePendulum(t, oscillations, lengthCm));
     }
 
     function initializePhaseGraph() {
-        const ctx = phaseGraphCanvas.getContext('2d');
+        const ctx = document.getElementById('phaseGraph').getContext('2d');
         phaseChart = new Chart(ctx, {
             type: 'scatter',
             data: {
@@ -479,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function() {
             averageResult.style.color = '#ff9800';
         } else {
             const source = fromServer ? '(server calculation)' : '(client calculation)';
-            averageResult.textContent = `Average Time Period: ${average.toFixed(2)}s (from ${count} trial${count !== 1 ? 's' : ''} ${source})`;
+            averageResult.textContent = `Average Time Period: ${average.toFixed(2)}s (from ${count} trial${count !== 1 ? 's' : ''} ${source}`;
             averageResult.style.color = '#11999E';
         }
     }
