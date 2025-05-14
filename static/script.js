@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const phaseDisplay = document.getElementById('phase-difference-value');
     const timeDisplay = document.getElementById('time-difference');
 
-    // Stopwatch Elements - Updated to match current HTML
+    // Stopwatch Elements
     const stopwatchDisplay = document.querySelector('.stopwatch-display');
     const minutesDisplay = document.createElement('span');
     minutesDisplay.id = 'minutes';
@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let trialNumber = 1;
     let pauseTime = 0;
     let lastResumeTime = 0;
+    let isFreshStart = true;
 
     // Phase Difference Tracking
     let phaseDifference = 0;
@@ -133,12 +134,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function startStopwatchAndPendulum() {
         if (!isPendulumRunning) {
-            if (lastResumeTime > 0) {
+            if (isFreshStart) {
+                // Reset all timing variables for new observation
+                oscillationCount = 0;
+                startTime = 0;
+                lastZeroCrossingTime = 0;
+                periodMeasurements = [];
+                phaseMeasurements = [];
+                
+                // Reset the stopwatch to 00:00:00 before starting
+                resetStopwatch(); // <-- FIX: Reset stopwatch before new observation
+                
+                // Set initial angle to 60 degrees when starting fresh
+                startAngle = 60;
+                stringContainer.style.transform = `translateX(-50%) rotate(${startAngle}deg)`;
+                lastAngle = startAngle;
+            } else if (lastResumeTime > 0) {
+                // Calculate paused duration and add to pauseTime
                 pauseTime += Date.now() - lastResumeTime;
             }
             
+            // Start or resume stopwatch
             startStopwatch();
             isPendulumRunning = true;
+            isFreshStart = false;
             updateButtonStates();
             
             const oscillations = parseInt(oscillationsInput.value) || 5;
@@ -160,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             isPendulumRunning = false;
             updateButtonStates();
-            lastResumeTime = Date.now();
+            lastResumeTime = Date.now(); // Record when we paused
         }
     }
 
@@ -218,17 +237,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const oscillations = parseInt(oscillationsInput.value) || 5;
         const lengthCm = parseInt(lengthInput.value) || 50;
 
-        periodMeasurements = [];
-        phaseMeasurements = [];
+        // Reset all timing variables for new observation
         oscillationCount = 0;
         startTime = 0;
         lastZeroCrossingTime = 0;
         pauseTime = 0;
         lastResumeTime = 0;
+        periodMeasurements = [];
+        phaseMeasurements = [];
+        isFreshStart = true;
 
         isPendulumRunning = true;
         updateButtonStates();
-        resetStopwatch();
+        resetStopwatch(); // Reset stopwatch before starting
         startStopwatch();
 
         if (animationId) cancelAnimationFrame(animationId);
@@ -253,10 +274,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Check if we've reached the required number of oscillations
         if (oscillationCount >= oscillations) {
             // Wait until pendulum returns to vertical position (angle ≈ 0)
-            if (Math.abs(angle) < 2) {  // Changed from 5 to 2 for more precise stopping
+            if (Math.abs(angle) < 2) {
                 stopStopwatch();
                 addDataToTable(oscillations, elapsed);
                 isPendulumRunning = false;
+                isFreshStart = true;
                 updateButtonStates();
                 return;
             }
@@ -358,6 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentPeriod = 0;
         pauseTime = 0;
         lastResumeTime = 0;
+        isFreshStart = true;
         phaseDisplay.textContent = "0";
         timeDisplay.textContent = "0";
         updateButtonStates();
@@ -461,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
         averageResult.style.color = '#ff9800';
 
         resetStopwatch();
-        stopPendulum();
+        stopStopwatchAndPendulum();
 
         phaseChart.data.labels = [];
         phaseChart.data.datasets[0].data = [];
