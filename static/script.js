@@ -1,220 +1,258 @@
 document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
-    const bob = document.getElementById('bob');
-    const stringContainer = document.querySelector('.pendulum-string-container');
-    const stringElement = document.querySelector('.pendulum-string');
-    const startBtn = document.getElementById('start-btn');
-    const resetBtn = document.getElementById('reset-btn');
-    const oscillationsInput = document.getElementById('oscillations');
-    const lengthInput = document.getElementById('length');
-    const dataBody = document.getElementById('data-body');
-    const averageBtn = document.getElementById('average-btn');
-    const averageResult = document.getElementById('average-result');
-    const phaseDisplay = document.getElementById('phase-difference-value');
-    const timeDisplay = document.getElementById('time-difference');
-    const phaseGraphCanvas = document.getElementById('phaseGraph');
+    const elements = {
+        bob: document.getElementById('bob'),
+        stringContainer: document.querySelector('.pendulum-string-container'),
+        stringElement: document.querySelector('.pendulum-string'),
+        startBtn: document.getElementById('start-btn'),
+        resetBtn: document.getElementById('reset-btn'),
+        oscillationsInput: document.getElementById('oscillations'),
+        lengthInput: document.getElementById('length'),
+        dataBody: document.getElementById('data-body'),
+        averageBtn: document.getElementById('average-btn'),
+        averageResult: document.getElementById('average-result'),
+        phaseDisplay: document.getElementById('phase-difference-value'),
+        timeDisplay: document.getElementById('time-difference'),
+        phaseGraphCanvas: document.getElementById('phaseGraph'),
+        stopwatchDisplay: document.querySelector('.stopwatch-display')
+    };
 
-    // Stopwatch Elements
-    const stopwatchDisplay = document.querySelector('.stopwatch-display');
-    const minutesDisplay = document.createElement('span');
-    minutesDisplay.id = 'minutes';
-    minutesDisplay.textContent = '00';
-    const secondsDisplay = document.createElement('span');
-    secondsDisplay.id = 'seconds';
-    secondsDisplay.textContent = '00';
-    const millisecondsDisplay = document.createElement('span');
-    millisecondsDisplay.id = 'milliseconds';
-    millisecondsDisplay.textContent = '00';
+    // Constants
+    const PHYSICS = {
+        GRAVITY: 9.8,
+        BASE_LENGTH: 300 // pixels for 100cm
+    };
 
-    // Build the display structure
-    stopwatchDisplay.innerHTML = '';
-    stopwatchDisplay.appendChild(minutesDisplay);
-    stopwatchDisplay.appendChild(document.createTextNode(':'));
-    stopwatchDisplay.appendChild(secondsDisplay);
-    stopwatchDisplay.appendChild(document.createTextNode('.'));
-    stopwatchDisplay.appendChild(millisecondsDisplay);
+    // State Management
+    const state = {
+        isDragging: false,
+        startAngle: 15,
+        animationId: null,
+        lastAngle: 0,
+        oscillationCount: 0,
+        currentLength: PHYSICS.BASE_LENGTH,
+        trialNumber: 1,
+        isFreshStart: true,
+        phaseDifference: 0,
+        lastZeroCrossingTime: 0,
+        currentPeriod: 0,
+        periodMeasurements: [],
+        phaseMeasurements: [],
+        stopwatchInterval: null,
+        stopwatchStartTime: 0,
+        elapsedTime: 0,
+        isStopwatchRunning: false,
+        isPendulumRunning: false,
+        pendulumStartTime: 0,
+        trialData: [],
+        lastFrameTime: 0,
+        isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    };
 
-    const stopwatchStartBtn = document.getElementById('stopwatch-start');
-    const stopwatchStopBtn = document.getElementById('stopwatch-stop');
-
-    // Physics Constants
-    const GRAVITY = 9.8;
-    const BASE_LENGTH = 300; // pixels for 100cm
-
-    // Animation Variables
-    let isDragging = false;
-    let startAngle = 15;
-    let animationId = null;
-    let lastAngle = 0;
-    let oscillationCount = 0;
-    let currentLength = BASE_LENGTH;
-    let trialNumber = 1;
-    let isFreshStart = true;
-
-    // Performance Optimization
-    let lastFrameTime = 0;
-    const MOBILE_FRAME_RATE = 30;
-    const FRAME_INTERVAL = 1000 / MOBILE_FRAME_RATE;
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-    // Phase Tracking
-    let phaseDifference = 0;
-    let lastZeroCrossingTime = 0;
-    let currentPeriod = 0;
-    let periodMeasurements = [];
-    let phaseMeasurements = [];
-
-    // Stopwatch Variables
-    let stopwatchInterval;
-    let stopwatchStartTime;
-    let elapsedTime = 0;
-    let isStopwatchRunning = false;
-    let isPendulumRunning = false;
-    let pendulumStartTime = 0;
-
-    // Data storage
-    let trialData = [];
-    let phaseChart;
+    // Performance Settings
+    const performanceSettings = {
+        mobileFrameRate: 30,
+        frameInterval: 1000 / 30,
+        stopwatchInterval: () => state.isMobile ? 50 : 10
+    };
 
     // Initialize
-    updateLength();
-    initializePhaseGraph();
-    setupEventListeners();
-    updateButtonStates();
+    function init() {
+        createStopwatchDisplay();
+        updateLength();
+        initializePhaseGraph();
+        setupEventListeners();
+        updateButtonStates();
+    }
+
+    function createStopwatchDisplay() {
+        elements.stopwatchDisplay.innerHTML = '';
+        
+        const minutesDisplay = document.createElement('span');
+        minutesDisplay.id = 'minutes';
+        minutesDisplay.textContent = '00';
+        
+        const secondsDisplay = document.createElement('span');
+        secondsDisplay.id = 'seconds';
+        secondsDisplay.textContent = '00';
+        
+        const millisecondsDisplay = document.createElement('span');
+        millisecondsDisplay.id = 'milliseconds';
+        millisecondsDisplay.textContent = '00';
+
+        elements.stopwatchDisplay.appendChild(minutesDisplay);
+        elements.stopwatchDisplay.appendChild(document.createTextNode(':'));
+        elements.stopwatchDisplay.appendChild(secondsDisplay);
+        elements.stopwatchDisplay.appendChild(document.createTextNode('.'));
+        elements.stopwatchDisplay.appendChild(millisecondsDisplay);
+    }
 
     function setupEventListeners() {
-        // Touch support for mobile
-        bob.addEventListener('mousedown', startDrag);
-        bob.addEventListener('touchstart', startDrag, { passive: false });
+        // Touch and mouse events
+        elements.bob.addEventListener('mousedown', startDrag);
+        elements.bob.addEventListener('touchstart', startDrag, { passive: false });
         document.addEventListener('mousemove', drag);
         document.addEventListener('touchmove', drag, { passive: false });
         document.addEventListener('mouseup', stopDrag);
         document.addEventListener('touchend', stopDrag);
         
-        startBtn.addEventListener('click', startExperiment);
-        resetBtn.addEventListener('click', resetPendulum);
-        lengthInput.addEventListener('input', updateLength);
-        averageBtn.addEventListener('click', calculateAverage);
-        stopwatchStartBtn.addEventListener('click', startExperiment);
-        stopwatchStopBtn.addEventListener('click', stopExperiment);
+        // Control buttons
+        elements.startBtn.addEventListener('click', startExperiment);
+        document.getElementById('stopwatch-start').addEventListener('click', startExperiment);
+        elements.resetBtn.addEventListener('click', resetPendulum);
+        document.getElementById('stopwatch-stop').addEventListener('click', stopExperiment);
+        
+        // Inputs
+        elements.lengthInput.addEventListener('input', updateLength);
+        elements.averageBtn.addEventListener('click', calculateAverage);
     }
 
-    function startStopwatch() {
-        if (!isStopwatchRunning) {
-            stopwatchStartTime = Date.now() - elapsedTime;
-            pendulumStartTime = Date.now();
-            stopwatchInterval = setInterval(updateStopwatch, isMobile ? 50 : 10);
-            isStopwatchRunning = true;
-            updateButtonStates();
+    // Core Pendulum Functions
+    function startExperiment() {
+        if (state.isPendulumRunning) return;
+
+        resetExperimentState();
+        setInitialAngle();
+        startTiming();
+        
+        const oscillations = parseInt(elements.oscillationsInput.value) || 5;
+        const lengthCm = parseInt(elements.lengthInput.value) || 50;
+
+        if (state.animationId) cancelAnimationFrame(state.animationId);
+        state.animationId = requestAnimationFrame((t) => animatePendulum(t, oscillations, lengthCm));
+    }
+
+    function resetExperimentState() {
+        state.oscillationCount = 0;
+        state.lastZeroCrossingTime = 0;
+        state.periodMeasurements = [];
+        state.phaseMeasurements = [];
+        state.lastFrameTime = 0;
+        resetStopwatch();
+    }
+
+    function setInitialAngle() {
+        state.startAngle = 60;
+        state.lastAngle = state.startAngle;
+        elements.stringContainer.style.transform = `translateX(-50%) rotate(${state.startAngle}deg)`;
+    }
+
+    function startTiming() {
+        state.stopwatchStartTime = Date.now() - state.elapsedTime;
+        state.pendulumStartTime = Date.now();
+        state.stopwatchInterval = setInterval(updateStopwatch, performanceSettings.stopwatchInterval());
+        state.isStopwatchRunning = true;
+        state.isPendulumRunning = true;
+        state.isFreshStart = false;
+        updateButtonStates();
+    }
+
+    function animatePendulum(timestamp, oscillations, lengthCm) {
+        // Throttle animation for mobile
+        const now = Date.now();
+        const deltaTime = now - state.lastFrameTime;
+        
+        if (state.isMobile && deltaTime < performanceSettings.frameInterval) {
+            state.animationId = requestAnimationFrame((t) => animatePendulum(t, oscillations, lengthCm));
+            return;
+        }
+        state.lastFrameTime = now - (deltaTime % performanceSettings.frameInterval);
+
+        // Calculate pendulum position
+        const elapsed = (now - state.pendulumStartTime) / 1000;
+        const lengthM = lengthCm / 100;
+        state.currentPeriod = 2 * Math.PI * Math.sqrt(lengthM / PHYSICS.GRAVITY);
+        const angle = state.startAngle * Math.cos(2 * Math.PI * elapsed / state.currentPeriod);
+
+        // Update display
+        state.phaseDifference = (2 * Math.PI * (elapsed % state.currentPeriod)) / state.currentPeriod;
+        elements.phaseDisplay.textContent = state.phaseDifference.toFixed(3);
+        elements.stringContainer.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+
+        // Count oscillations precisely
+        countOscillations(angle, elapsed);
+
+        // Check for completion
+        if (state.oscillationCount >= oscillations && Math.abs(angle) < 1) {
+            completeExperiment(oscillations, elapsed);
+            return;
+        }
+
+        state.lastAngle = angle;
+        state.animationId = requestAnimationFrame((t) => animatePendulum(t, oscillations, lengthCm));
+    }
+
+    function countOscillations(currentAngle, elapsed) {
+        const currentSign = Math.sign(currentAngle);
+        const lastSign = Math.sign(state.lastAngle);
+
+        if (currentSign !== 0 && lastSign !== 0 && currentSign !== lastSign) {
+            state.oscillationCount += 0.5;
+            if (state.oscillationCount % 1 === 0) {
+                const period = elapsed - state.lastZeroCrossingTime;
+                state.lastZeroCrossingTime = elapsed;
+                state.periodMeasurements.push(period);
+                state.phaseMeasurements.push(state.phaseDifference);
+            }
         }
     }
 
+    function completeExperiment(oscillations, elapsedTime) {
+        stopStopwatch();
+        addDataToTable(oscillations, elapsedTime);
+        state.isPendulumRunning = false;
+        state.isFreshStart = true;
+        updateButtonStates();
+    }
+
+    // Stopwatch Functions
     function updateStopwatch() {
         const currentTime = Date.now();
-        elapsedTime = currentTime - stopwatchStartTime;
+        state.elapsedTime = currentTime - state.stopwatchStartTime;
 
-        const minutes = Math.floor(elapsedTime / 60000);
-        const seconds = Math.floor((elapsedTime % 60000) / 1000);
-        const milliseconds = Math.floor((elapsedTime % 1000) / 10);
+        const minutes = Math.floor(state.elapsedTime / 60000);
+        const seconds = Math.floor((state.elapsedTime % 60000) / 1000);
+        const milliseconds = Math.floor((state.elapsedTime % 1000) / 10);
 
-        minutesDisplay.textContent = minutes.toString().padStart(2, '0');
-        secondsDisplay.textContent = seconds.toString().padStart(2, '0');
-        millisecondsDisplay.textContent = milliseconds.toString().padStart(2, '0');
+        document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+        document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+        document.getElementById('milliseconds').textContent = milliseconds.toString().padStart(2, '0');
     }
 
     function stopStopwatch() {
-        clearInterval(stopwatchInterval);
-        isStopwatchRunning = false;
-        updateButtonStates();
+        clearInterval(state.stopwatchInterval);
+        state.isStopwatchRunning = false;
     }
 
     function resetStopwatch() {
         stopStopwatch();
-        elapsedTime = 0;
-        minutesDisplay.textContent = '00';
-        secondsDisplay.textContent = '00';
-        millisecondsDisplay.textContent = '00';
-        updateButtonStates();
+        state.elapsedTime = 0;
+        document.getElementById('minutes').textContent = '00';
+        document.getElementById('seconds').textContent = '00';
+        document.getElementById('milliseconds').textContent = '00';
     }
 
-    function updateButtonStates() {
-        stopwatchStartBtn.disabled = isStopwatchRunning || isPendulumRunning;
-        stopwatchStopBtn.disabled = !isStopwatchRunning || !isPendulumRunning;
-        startBtn.disabled = isPendulumRunning || isStopwatchRunning;
-        resetBtn.disabled = !isPendulumRunning && !isStopwatchRunning && trialData.length === 0;
-        averageBtn.disabled = trialData.length === 0;
-    }
-
-    function startExperiment() {
-        if (!isPendulumRunning) {
-            // Reset all variables
-            oscillationCount = 0;
-            lastZeroCrossingTime = 0;
-            periodMeasurements = [];
-            phaseMeasurements = [];
-            lastFrameTime = 0;
-
-            resetStopwatch();
-            
-            // Set initial angle
-            startAngle = 60;
-            stringContainer.style.transform = `translateX(-50%) rotate(${startAngle}deg)`;
-            lastAngle = startAngle;
-
-            // Start timing
-            startStopwatch();
-            isPendulumRunning = true;
-            isFreshStart = false;
-            updateButtonStates();
-
-            const oscillations = parseInt(oscillationsInput.value) || 5;
-            const lengthCm = parseInt(lengthInput.value) || 50;
-
-            if (animationId) cancelAnimationFrame(animationId);
-            animationId = requestAnimationFrame((t) => animatePendulum(t, oscillations, lengthCm));
-        }
-    }
-
-    function stopExperiment() {
-        if (isPendulumRunning) {
-            stopStopwatch();
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-                animationId = null;
-            }
-            isPendulumRunning = false;
-            updateButtonStates();
-            stringContainer.style.willChange = 'auto';
-        }
-    }
-
-    function updateLength() {
-        const lengthCm = parseInt(lengthInput.value) || 50;
-        const scale = lengthCm / 100;
-        currentLength = BASE_LENGTH * scale;
-        stringElement.style.height = `${currentLength}px`;
-    }
-
+    // Drag Functions
     function startDrag(e) {
         e.preventDefault();
-        isDragging = true;
-        bob.style.cursor = 'grabbing';
+        state.isDragging = true;
+        elements.bob.style.cursor = 'grabbing';
 
-        if (animationId) {
-            cancelAnimationFrame(animationId);
-            animationId = null;
-            isPendulumRunning = false;
+        if (state.animationId) {
+            cancelAnimationFrame(state.animationId);
+            state.animationId = null;
+            state.isPendulumRunning = false;
         }
         updateButtonStates();
     }
 
     function drag(e) {
-        if (!isDragging) return;
+        if (!state.isDragging) return;
         e.preventDefault();
 
         const container = document.querySelector('.pendulum-container');
         const rect = container.getBoundingClientRect();
-        const stringContainerRect = stringContainer.getBoundingClientRect();
+        const stringContainerRect = elements.stringContainer.getBoundingClientRect();
 
         const clientX = e.clientX || e.touches[0].clientX;
         const clientY = e.clientY || e.touches[0].clientY;
@@ -228,75 +266,71 @@ document.addEventListener('DOMContentLoaded', function() {
         let angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
         angle = Math.max(-60, Math.min(60, angle));
 
-        stringContainer.style.transform = `translateX(-50%) rotate(${angle}deg)`;
-        startAngle = angle;
-        lastAngle = angle;
+        elements.stringContainer.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+        state.startAngle = angle;
+        state.lastAngle = angle;
     }
 
     function stopDrag() {
-        isDragging = false;
-        bob.style.cursor = 'grab';
+        state.isDragging = false;
+        elements.bob.style.cursor = 'grab';
     }
 
-    function animatePendulum(timestamp, oscillations, lengthCm) {
-        // Throttle animation for mobile
-        const now = Date.now();
-        const deltaTime = now - lastFrameTime;
-        
-        if (isMobile && deltaTime < FRAME_INTERVAL) {
-            animationId = requestAnimationFrame((t) => animatePendulum(t, oscillations, lengthCm));
-            return;
-        }
-        lastFrameTime = now - (deltaTime % FRAME_INTERVAL);
+    // UI Functions
+    function updateButtonStates() {
+        const buttons = {
+            start: document.getElementById('stopwatch-start'),
+            stop: document.getElementById('stopwatch-stop'),
+            mainStart: elements.startBtn,
+            reset: elements.resetBtn,
+            average: elements.averageBtn
+        };
 
-        // Use precise timing
-        const elapsed = (now - pendulumStartTime) / 1000;
-        
-        const lengthM = lengthCm / 100;
-        currentPeriod = 2 * Math.PI * Math.sqrt(lengthM / GRAVITY);
-        const angle = startAngle * Math.cos(2 * Math.PI * elapsed / currentPeriod);
+        buttons.start.disabled = state.isStopwatchRunning || state.isPendulumRunning;
+        buttons.stop.disabled = !state.isStopwatchRunning || !state.isPendulumRunning;
+        buttons.mainStart.disabled = state.isPendulumRunning || state.isStopwatchRunning;
+        buttons.reset.disabled = !state.isPendulumRunning && !state.isStopwatchRunning && state.trialData.length === 0;
+        buttons.average.disabled = state.trialData.length === 0;
+    }
 
-        phaseDifference = (2 * Math.PI * (elapsed % currentPeriod)) / currentPeriod;
-        phaseDisplay.textContent = phaseDifference.toFixed(3);
+    function updateLength() {
+        const lengthCm = parseInt(elements.lengthInput.value) || 50;
+        const scale = lengthCm / 100;
+        state.currentLength = PHYSICS.BASE_LENGTH * scale;
+        elements.stringElement.style.height = `${state.currentLength}px`;
+    }
 
-        // Optimized animation
-        stringContainer.style.willChange = 'transform';
-        stringContainer.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+    // Data Functions
+    function addDataToTable(oscillations, totalTime) {
+        const period = (totalTime / oscillations).toFixed(2);
+        const trial = {
+            number: state.trialNumber,
+            oscillations: oscillations,
+            totalTime: totalTime.toFixed(2),
+            period: period
+        };
 
-        // Accurate oscillation counting
-        const currentSign = Math.sign(angle);
-        const lastSign = Math.sign(lastAngle);
+        state.trialData.push(trial);
+        const lengthCm = parseInt(elements.lengthInput.value) || 50;
+        updateLengthVsT2Graph(lengthCm, period);
 
-        if (currentSign !== 0 && lastSign !== 0 && currentSign !== lastSign) {
-            oscillationCount += 0.5;
-            if (oscillationCount % 1 === 0) {
-                const period = elapsed - lastZeroCrossingTime;
-                lastZeroCrossingTime = elapsed;
-                periodMeasurements.push(period);
-                phaseMeasurements.push(phaseDifference);
-            }
-        }
+        const row = `
+            <tr>
+                <td>${trial.number}</td>
+                <td>${trial.oscillations}</td>
+                <td>${trial.totalTime}</td>
+                <td>${trial.period}</td>
+            </tr>
+        `;
+        elements.dataBody.insertAdjacentHTML('beforeend', row);
+        state.trialNumber++;
 
-        // Completion check
-        if (oscillationCount >= oscillations) {
-            if (Math.abs(angle) < 1) {
-                stopStopwatch();
-                addDataToTable(oscillations, elapsed);
-                isPendulumRunning = false;
-                isFreshStart = true;
-                updateButtonStates();
-                stringContainer.style.willChange = 'auto';
-                return;
-            }
-        }
-
-        lastAngle = angle;
-        animationId = requestAnimationFrame((t) => animatePendulum(t, oscillations, lengthCm));
+        saveDataToServer(trial);
     }
 
     function initializePhaseGraph() {
-        const ctx = phaseGraphCanvas.getContext('2d');
-        phaseChart = new Chart(ctx, {
+        const ctx = elements.phaseGraphCanvas.getContext('2d');
+        window.phaseChart = new Chart(ctx, {
             type: 'scatter',
             data: {
                 labels: [],
@@ -357,60 +391,47 @@ document.addEventListener('DOMContentLoaded', function() {
         const T2 = Math.pow(period, 2);
         const lengthM = lengthCm / 100;
 
-        phaseChart.data.labels.push(`Trial ${trialNumber}`);
-        phaseChart.data.datasets[0].data.push({
+        window.phaseChart.data.labels.push(`Trial ${state.trialNumber}`);
+        window.phaseChart.data.datasets[0].data.push({
             x: lengthM,
             y: T2
         });
-        phaseChart.update();
+        window.phaseChart.update();
     }
 
     function resetPendulum() {
         stopExperiment();
-        stringContainer.style.transform = 'translateX(-50%) rotate(0deg)';
-        startAngle = 15;
-        lastAngle = 0;
-        oscillationCount = 0;
-        lastZeroCrossingTime = 0;
-        currentPeriod = 0;
-        isFreshStart = true;
-        phaseDisplay.textContent = "0";
-        timeDisplay.textContent = "0";
+        elements.stringContainer.style.transform = 'translateX(-50%) rotate(0deg)';
+        state.startAngle = 15;
+        state.lastAngle = 0;
+        state.oscillationCount = 0;
+        state.lastZeroCrossingTime = 0;
+        state.currentPeriod = 0;
+        state.isFreshStart = true;
+        elements.phaseDisplay.textContent = "0";
+        elements.timeDisplay.textContent = "0";
         updateButtonStates();
 
-        phaseChart.data.labels = [];
-        phaseChart.data.datasets[0].data = [];
-        phaseChart.update();
+        if (window.phaseChart) {
+            window.phaseChart.data.labels = [];
+            window.phaseChart.data.datasets[0].data = [];
+            window.phaseChart.update();
+        }
 
         fetch('/clear_data', { method: 'POST' })
             .catch(error => console.error('Error clearing server data:', error));
     }
 
-    function addDataToTable(oscillations, totalTime) {
-        const period = (totalTime / oscillations).toFixed(2);
-        const trial = {
-            number: trialNumber,
-            oscillations: oscillations,
-            totalTime: totalTime.toFixed(2),
-            period: period
-        };
-
-        trialData.push(trial);
-        const lengthCm = parseInt(lengthInput.value) || 50;
-        updateLengthVsT2Graph(lengthCm, period);
-
-        const row = `
-            <tr>
-                <td>${trial.number}</td>
-                <td>${trial.oscillations}</td>
-                <td>${trial.totalTime}</td>
-                <td>${trial.period}</td>
-            </tr>
-        `;
-        dataBody.insertAdjacentHTML('beforeend', row);
-        trialNumber++;
-
-        saveDataToServer(trial);
+    function stopExperiment() {
+        if (state.isPendulumRunning) {
+            stopStopwatch();
+            if (state.animationId) {
+                cancelAnimationFrame(state.animationId);
+                state.animationId = null;
+            }
+            state.isPendulumRunning = false;
+            updateButtonStates();
+        }
     }
 
     function saveDataToServer(trial) {
@@ -420,52 +441,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(trial)
-        })
-        .catch(error => {
-            console.error('Error saving data:', error);
-        });
+        }).catch(error => console.error('Error saving data:', error));
     }
 
     function calculateAverage() {
         fetch('/get_average')
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
+            .then(response => response.ok ? response.json() : Promise.reject())
             .then(data => {
-                if (data.status === 'success' && data.count === trialData.length) {
+                if (data.status === 'success' && data.count === state.trialData.length) {
                     displayAverageResult(data.average, data.count, true);
                 } else {
                     calculateClientSideAverage();
                 }
             })
-            .catch(() => {
-                calculateClientSideAverage();
-            });
+            .catch(calculateClientSideAverage);
     }
 
     function calculateClientSideAverage() {
-        if (trialData.length === 0) {
+        if (state.trialData.length === 0) {
             displayAverageResult(0, 0, false);
             return;
         }
 
-        const totalPeriod = trialData.reduce((sum, trial) => {
-            return sum + parseFloat(trial.period);
-        }, 0);
-
-        const average = totalPeriod / trialData.length;
-        displayAverageResult(average, trialData.length, false);
+        const totalPeriod = state.trialData.reduce((sum, trial) => sum + parseFloat(trial.period), 0);
+        const average = totalPeriod / state.trialData.length;
+        displayAverageResult(average, state.trialData.length, false);
     }
 
     function displayAverageResult(average, count, fromServer) {
-        if (count === 0) {
-            averageResult.textContent = 'No data available to calculate average';
-            averageResult.style.color = '#ff9800';
-        } else {
-            const source = fromServer ? '(server calculation)' : '(client calculation)';
-            averageResult.textContent = `Average Time Period: ${average.toFixed(2)}s (from ${count} trial${count !== 1 ? 's' : ''} ${source})`;
-            averageResult.style.color = '#11999E';
-        }
+        elements.averageResult.textContent = count === 0 
+            ? 'No data available to calculate average'
+            : `Average Time Period: ${average.toFixed(2)}s (from ${count} trial${count !== 1 ? 's' : ''} ${fromServer ? '(server calculation)' : '(client calculation)'})`;
+        
+        elements.averageResult.style.color = count === 0 ? '#ff9800' : '#11999E';
     }
+
+    // Initialize the application
+    init();
 });
