@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const phaseDisplay = document.getElementById('phase-difference-value');
     const timeDisplay = document.getElementById('time-difference');
 
-    // Stopwatch Elements - Updated to match current HTML
+    // Stopwatch Elements
     const stopwatchDisplay = document.querySelector('.stopwatch-display');
     const minutesDisplay = document.createElement('span');
     minutesDisplay.id = 'minutes';
@@ -76,15 +76,85 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
 
     function setupEventListeners() {
+        // Mouse events for desktop
         bob.addEventListener('mousedown', startDrag);
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', stopDrag);
+        
+        // Touch events for mobile
+        bob.addEventListener('touchstart', handleTouchStart, { passive: false });
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleTouchEnd);
+        
+        // Control buttons
         startBtn.addEventListener('click', startOscillation);
         resetBtn.addEventListener('click', resetPendulum);
         lengthInput.addEventListener('input', updateLength);
         averageBtn.addEventListener('click', calculateAverage);
         stopwatchStartBtn.addEventListener('click', startStopwatchAndPendulum);
         stopwatchStopBtn.addEventListener('click', stopStopwatchAndPendulum);
+    }
+
+    // Touch event handlers
+    function handleTouchStart(e) {
+        e.preventDefault();
+        startDrag(e.touches[0]);
+    }
+
+    function handleTouchMove(e) {
+        e.preventDefault();
+        drag(e.touches[0]);
+    }
+
+    function handleTouchEnd(e) {
+        e.preventDefault();
+        stopDrag();
+    }
+
+    function startDrag(e) {
+        e.preventDefault();
+        isDragging = true;
+        bob.style.cursor = 'grabbing';
+        bob.style.touchAction = 'none';
+        
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+            isPendulumRunning = false;
+        }
+        updateButtonStates();
+    }
+
+    function drag(e) {
+        if (!isDragging) return;
+
+        const container = document.querySelector('.pendulum-container');
+        const rect = container.getBoundingClientRect();
+        const stringContainerRect = stringContainer.getBoundingClientRect();
+
+        const pivotX = rect.left + rect.width / 2;
+        const pivotY = stringContainerRect.top;
+
+        // Works for both mouse and touch events
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+        if (!clientX || !clientY) return;
+
+        const deltaX = clientX - pivotX;
+        const deltaY = clientY - pivotY;
+
+        let angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+        angle = Math.max(-60, Math.min(60, angle));
+
+        stringContainer.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+        startAngle = angle;
+        lastAngle = angle;
+    }
+
+    function stopDrag() {
+        isDragging = false;
+        bob.style.cursor = 'grab';
     }
 
     function startStopwatch() {
@@ -171,49 +241,6 @@ document.addEventListener('DOMContentLoaded', function() {
         stringElement.style.height = `${currentLength}px`;
     }
 
-    function startDrag(e) {
-        e.preventDefault();
-        isDragging = true;
-        bob.style.cursor = 'grabbing';
-
-        if (animationId) {
-            cancelAnimationFrame(animationId);
-            animationId = null;
-            isPendulumRunning = false;
-        }
-        updateButtonStates();
-    }
-
-    function drag(e) {
-        if (!isDragging) return;
-
-        const container = document.querySelector('.pendulum-container');
-        const rect = container.getBoundingClientRect();
-        const stringContainerRect = stringContainer.getBoundingClientRect();
-
-        const pivotX = rect.left + rect.width / 2;
-        const pivotY = stringContainerRect.top;
-
-        const mouseX = e.clientX;
-        const mouseY = e.clientY;
-
-        const deltaX = mouseX - pivotX;
-        const deltaY = mouseY - pivotY;
-
-        let angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-
-        angle = Math.max(-60, Math.min(60, angle));
-
-        stringContainer.style.transform = `translateX(-50%) rotate(${angle}deg)`;
-        startAngle = angle;
-        lastAngle = angle;
-    }
-
-    function stopDrag() {
-        isDragging = false;
-        bob.style.cursor = 'grab';
-    }
-
     function startOscillation() {
         const oscillations = parseInt(oscillationsInput.value) || 5;
         const lengthCm = parseInt(lengthInput.value) || 50;
@@ -253,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Check if we've reached the required number of oscillations
         if (oscillationCount >= oscillations) {
             // Wait until pendulum returns to vertical position (angle ≈ 0)
-            if (Math.abs(angle) < 2) {  // Changed from 5 to 2 for more precise stopping
+            if (Math.abs(angle) < 2) {
                 stopStopwatch();
                 addDataToTable(oscillations, elapsed);
                 isPendulumRunning = false;
@@ -451,23 +478,5 @@ document.addEventListener('DOMContentLoaded', function() {
             averageResult.textContent = `Average Time Period: ${average.toFixed(2)}s (from ${count} trial${count !== 1 ? 's' : ''} ${source}`;
             averageResult.style.color = '#11999E';
         }
-    }
-
-    function clearData() {
-        trialData = [];
-        dataBody.innerHTML = '';
-        trialNumber = 1;
-        averageResult.textContent = 'Data cleared';
-        averageResult.style.color = '#ff9800';
-
-        resetStopwatch();
-        stopPendulum();
-
-        phaseChart.data.labels = [];
-        phaseChart.data.datasets[0].data = [];
-        phaseChart.update();
-
-        fetch('/clear_data', { method: 'POST' })
-            .catch(error => console.error('Error clearing server data:', error));
     }
 });
